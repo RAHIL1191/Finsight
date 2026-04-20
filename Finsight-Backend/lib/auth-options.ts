@@ -4,7 +4,7 @@ import type { NextAuthOptions } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
-import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import { env, features } from "./env";
 import { connectToDatabase } from "./mongodb";
 import User from "@/models/User";
