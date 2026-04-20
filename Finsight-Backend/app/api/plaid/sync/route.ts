@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
             await syncPlaidTransactions({
                 accessToken,
                 cursor
-            });[web: 318][web: 319][web: 324]
+            });
 
         // 2. Filter to this specific Plaid account id.
         const addedForAccount = added.filter(
@@ -179,7 +179,7 @@ async function upsertPlaidTransaction(
     const category =
         pf?.detailed ??
         pf?.primary ??
-        null;[web: 319][web: 326]
+        null;
 
     const existing = await Transaction.findOne({
         userId,
