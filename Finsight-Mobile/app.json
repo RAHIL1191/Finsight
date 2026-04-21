@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "FinSight",
+    "slug": "finsight",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "finsight",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.rahil.finsight"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F0F14"
+      },
+      "package": "com.rahil.finsight"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
+  }
+}
