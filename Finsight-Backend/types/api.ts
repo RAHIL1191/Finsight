@@ -234,20 +234,8 @@ export const CalendarQuerySchema = z.object({
 export type CashflowQuery = z.infer<typeof CashflowQuerySchema>;
 export type CalendarQuery = z.infer<typeof CalendarQuerySchema>;
 
-// ─── Plaid ────────────────────────────────────────────────────────────────────
-
-export const PlaidExchangeSchema = z.object({
-    publicToken: z.string().min(1),
-    institutionName: z.string().min(1).max(100).optional(),
-    accountIds: z.array(z.string()).optional()
-});
-
-export const PlaidSyncSchema = z.object({
-    accountId: ObjectIdSchema
-});
-
-export type PlaidExchangeInput = z.infer<typeof PlaidExchangeSchema>;
-export type PlaidSyncInput = z.infer<typeof PlaidSyncSchema>;
+// Re-export specific plaid types if needed or just let types/index.ts handle it
+// They are already in types/plaid.ts
 
 // ─── SnapTrade ────────────────────────────────────────────────────────────────
 

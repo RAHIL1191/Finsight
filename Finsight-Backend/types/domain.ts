@@ -12,8 +12,8 @@ import { Types } from "mongoose";
 
 export type ObjectIdLike = Types.ObjectId | string;
 
-/** ISO 8601 date string (returned by JSON serialization of Date). */
-export type ISODateString = string;
+/** ISO 8601 date string or Date object. */
+export type ISODateString = string | Date;
 
 // ─── User ────────────────────────────────────────────────────────────────────
 

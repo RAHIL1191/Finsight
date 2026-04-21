@@ -132,6 +132,15 @@ export const authOptions: NextAuthOptions = {
                 (session.user as any).id = token.userId;
             }
             return session;
+        },
+        async redirect({ url, baseUrl }) {
+            // Allow custom schemes for mobile app redirection
+            if (url.startsWith("finsight://")) return url;
+            // Allows relative callback URLs
+            if (url.startsWith("/")) return `${baseUrl}${url}`;
+            // Allows callback URLs on the same origin
+            else if (new URL(url).origin === baseUrl) return url;
+            return baseUrl;
         }
     }
 };
