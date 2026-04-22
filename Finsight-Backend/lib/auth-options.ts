@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
         strategy: "jwt"
     },
     pages: {
-        // We’ll use the default NextAuth pages; the Expo app will use WebView to hit them.
+        signIn: "/auth/signin",
     },
     adapter: features.database
         ? MongoDBAdapter(getMongoClient())
@@ -45,7 +45,14 @@ export const authOptions: NextAuthOptions = {
             ? [
                 GoogleProvider({
                     clientId: env.GOOGLE_CLIENT_ID!,
-                    clientSecret: env.GOOGLE_CLIENT_SECRET!
+                    clientSecret: env.GOOGLE_CLIENT_SECRET!,
+                    authorization: {
+                        params: {
+                            prompt: "consent",
+                            access_type: "offline",
+                            response_type: "code"
+                        }
+                    }
                 })
             ]
             : []),

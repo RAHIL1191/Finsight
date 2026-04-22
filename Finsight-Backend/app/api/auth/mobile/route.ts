@@ -8,8 +8,10 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
-        // If no session, redirect to backend sign-in
-        return NextResponse.redirect(new URL("/api/auth/signin", req.url));
+        // If no session, redirect to our custom branded sign-in page
+        const signinUrl = new URL("/auth/signin", req.url);
+        signinUrl.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search);
+        return NextResponse.redirect(signinUrl);
     }
 
     // Sign a token for the mobile app to use for API calls

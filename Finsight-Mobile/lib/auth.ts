@@ -51,23 +51,34 @@ export async function signInWithGoogle(): Promise<string> {
 
     const result = await WebBrowser.openAuthSessionAsync(
         authUrl,
-        redirectUri
+        redirectUri,
+        {
+            preferEphemeralSession: true,
+        }
     );
 
     if (result.type === "success" && result.url) {
         const url = new URL(result.url);
         const token = url.searchParams.get("token");
         const userJson = url.searchParams.get("user");
+        const success = url.searchParams.get("success");
 
-        if (token) {
-            await SecureStore.setItemAsync("session_token", token);
+        // Check if this is a success redirect from the mobile callback
+        if (success === "true" || (token && userJson)) {
+            if (token) {
+                await SecureStore.setItemAsync("session_token", token);
+            }
+            if (userJson) {
+                await saveSession(JSON.parse(userJson));
+            }
+            return "success";
         }
-        if (userJson) {
-            await saveSession(JSON.parse(userJson));
-        }
+    } else if (result.type === "cancel" || result.type === "dismiss") {
+        return result.type;
     }
 
-    return result.type;
+    // If we get here, try to fetch session directly
+    return "failure";
 }
 
 export async function signOut() {
