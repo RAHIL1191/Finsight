@@ -46,7 +46,7 @@ export async function fetchSessionFromServer(): Promise<SessionUser | null> {
 
 export async function signInWithGoogle(): Promise<string> {
     const callbackUrl = `${API_URL}/api/auth/mobile`;
-    const authUrl = `${API_URL}/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    const authUrl = `${API_URL}/api/auth/mobile/start?callbackUrl=${encodeURIComponent(callbackUrl)}`;
     const redirectUri = "finsight://auth/callback";
 
     const result = await WebBrowser.openAuthSessionAsync(
