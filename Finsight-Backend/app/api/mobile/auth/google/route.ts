@@ -16,11 +16,17 @@ export async function POST(req: NextRequest) {
     const { idToken } = await req.json();
 
     if (!idToken) {
+      console.error("Mobile Google auth: No ID token provided");
       return NextResponse.json(
         { success: false, error: "ID token required" },
         { status: 400 }
       );
     }
+
+    console.log("Mobile Google auth: Verifying ID token", {
+      hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+      clientIdPreview: process.env.GOOGLE_CLIENT_ID?.substring(0, 10)
+    });
 
     // Verify the ID token with Google
     const ticket = await client.verifyIdToken({
@@ -93,9 +99,13 @@ export async function POST(req: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error("Mobile Google sign-in error:", error);
+    console.error("Mobile Google sign-in error:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : "No stack",
+      idTokenLength: (await req.json())?.idToken?.length
+    });
     return NextResponse.json(
-      { success: false, error: "Authentication failed" },
+      { success: false, error: "Authentication failed", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
