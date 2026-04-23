@@ -1,5 +1,5 @@
 import * as SecureStore from "expo-secure-store";
-import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import { API_URL } from "@/constants/config";
 
 const SESSION_KEY = "finsight_session";
@@ -44,41 +44,61 @@ export async function fetchSessionFromServer(): Promise<SessionUser | null> {
     }
 }
 
+/**
+ * Opens Google sign-in in the device's default browser (NOT Chrome Custom Tabs).
+ * This avoids the forced-dark-mode rendering issue in Custom Tabs.
+ * The callback comes back via the finsight:// deep link scheme.
+ */
 export async function signInWithGoogle(): Promise<string> {
     const callbackUrl = `${API_URL}/api/auth/mobile`;
     const authUrl = `${API_URL}/api/auth/mobile/start?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-    const redirectUri = "finsight://auth/callback";
 
-    const result = await WebBrowser.openAuthSessionAsync(
-        authUrl,
-        redirectUri,
-        {
-            showInRecents: true,
-        }
-    );
+    return new Promise<string>((resolve) => {
+        let resolved = false;
 
-    if (result.type === "success" && result.url) {
-        const url = new URL(result.url);
-        const token = url.searchParams.get("token");
-        const userJson = url.searchParams.get("user");
-        const success = url.searchParams.get("success");
+        // Listen for the deep link callback from the OAuth flow
+        const subscription = Linking.addEventListener("url", (event) => {
+            if (resolved) return;
 
-        // Check if this is a success redirect from the mobile callback
-        if (success === "true" || (token && userJson)) {
-            if (token) {
-                await SecureStore.setItemAsync("session_token", token);
+            try {
+                const url = new URL(event.url);
+
+                // Only handle our auth callback
+                if (!event.url.startsWith("finsight://auth/callback")) return;
+
+                resolved = true;
+                subscription.remove();
+
+                const token = url.searchParams.get("token");
+                const userJson = url.searchParams.get("user");
+                const success = url.searchParams.get("success");
+
+                if ((success === "true" || token) && token && userJson) {
+                    SecureStore.setItemAsync("session_token", token);
+                    saveSession(JSON.parse(userJson));
+                    resolve("success");
+                } else {
+                    resolve("failure");
+                }
+            } catch (e) {
+                resolved = true;
+                subscription.remove();
+                resolve("failure");
             }
-            if (userJson) {
-                await saveSession(JSON.parse(userJson));
-            }
-            return "success";
-        }
-    } else if (result.type === "cancel" || result.type === "dismiss") {
-        return result.type;
-    }
+        });
 
-    // If we get here, try to fetch session directly
-    return "failure";
+        // Open in the default browser (not Chrome Custom Tabs)
+        Linking.openURL(authUrl);
+
+        // Timeout after 2 minutes — user probably cancelled
+        setTimeout(() => {
+            if (!resolved) {
+                resolved = true;
+                subscription.remove();
+                resolve("cancel");
+            }
+        }, 120000);
+    });
 }
 
 export async function signOut() {

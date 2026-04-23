@@ -7,13 +7,10 @@ import {
     Image,
     Alert,
 } from "react-native";
-import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { signInWithGoogle } from "@/lib/auth";
 import { API_URL } from "@/constants/config";
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
     const [loading, setLoading] = useState(false);
