@@ -10,10 +10,13 @@ import User from "@/models/User";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export async function POST(req: NextRequest) {
+  let idToken: string | undefined;
+
   try {
     await connectToDatabase();
 
-    const { idToken } = await req.json();
+    const body = await req.json();
+    idToken = body.idToken;
 
     if (!idToken) {
       console.error("Mobile Google auth: No ID token provided");
@@ -102,7 +105,7 @@ export async function POST(req: NextRequest) {
     console.error("Mobile Google sign-in error:", {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : "No stack",
-      idTokenLength: (await req.json())?.idToken?.length
+      idTokenLength: idToken?.length
     });
     return NextResponse.json(
       { success: false, error: "Authentication failed", details: error instanceof Error ? error.message : String(error) },
