@@ -3,10 +3,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { OAuth2Client } from 'google-auth-library';
+import jwt from 'jsonwebtoken';
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
-import { createSessionToken } from "@/lib/session";
-import { encode } from "@/lib/jwt";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -58,16 +57,17 @@ export async function POST(req: NextRequest) {
       await user.save();
     }
 
-    // Create session token
-    const sessionToken = createSessionToken(user._id.toString());
-
-    // Create JWT for mobile
-    const token = await encode({
-      userId: user._id.toString(),
-      email: user.email,
-      name: user.name,
-      image: user.image,
-    });
+    // Create JWT token for mobile
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        image: user.image,
+      },
+      process.env.NEXTAUTH_SECRET!,
+      { expiresIn: '30d' }
+    );
 
     // Create auth cookie (optional, for web compatibility)
     const response = NextResponse.json({
@@ -82,8 +82,8 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // Set session cookie (same pattern as existing auth)
-    response.cookies.set("sessionToken", sessionToken, {
+    // Set session cookie for web compatibility
+    response.cookies.set("sessionToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
