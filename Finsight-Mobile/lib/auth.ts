@@ -1,5 +1,5 @@
 import * as SecureStore from "expo-secure-store";
-import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import { API_URL } from "@/constants/config";
 
 const SESSION_KEY = "finsight_session";
@@ -44,61 +44,38 @@ export async function fetchSessionFromServer(): Promise<SessionUser | null> {
     }
 }
 
-/**
- * Opens Google sign-in in the device's default browser (NOT Chrome Custom Tabs).
- * This avoids the forced-dark-mode rendering issue in Custom Tabs.
- * The callback comes back via the finsight:// deep link scheme.
- */
 export async function signInWithGoogle(): Promise<string> {
     const callbackUrl = `${API_URL}/api/auth/mobile`;
     const authUrl = `${API_URL}/api/auth/mobile/start?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    const redirectUri = "finsight://auth/callback";
 
-    return new Promise<string>((resolve) => {
-        let resolved = false;
+    // Reverting to WebBrowser.openAuthSessionAsync which is the standard, stable
+    // way to do OAuth in React Native/Expo.
+    const result = await WebBrowser.openAuthSessionAsync(
+        authUrl,
+        redirectUri
+    );
 
-        // Listen for the deep link callback from the OAuth flow
-        const subscription = Linking.addEventListener("url", (event) => {
-            if (resolved) return;
+    if (result.type === "success" && result.url) {
+        const url = new URL(result.url);
+        const token = url.searchParams.get("token");
+        const userJson = url.searchParams.get("user");
+        const success = url.searchParams.get("success");
 
-            try {
-                const url = new URL(event.url);
-
-                // Only handle our auth callback
-                if (!event.url.startsWith("finsight://auth/callback")) return;
-
-                resolved = true;
-                subscription.remove();
-
-                const token = url.searchParams.get("token");
-                const userJson = url.searchParams.get("user");
-                const success = url.searchParams.get("success");
-
-                if ((success === "true" || token) && token && userJson) {
-                    SecureStore.setItemAsync("session_token", token);
-                    saveSession(JSON.parse(userJson));
-                    resolve("success");
-                } else {
-                    resolve("failure");
-                }
-            } catch (e) {
-                resolved = true;
-                subscription.remove();
-                resolve("failure");
+        if (success === "true" || (token && userJson)) {
+            if (token) {
+                await SecureStore.setItemAsync("session_token", token);
             }
-        });
-
-        // Open in the default browser (not Chrome Custom Tabs)
-        Linking.openURL(authUrl);
-
-        // Timeout after 2 minutes — user probably cancelled
-        setTimeout(() => {
-            if (!resolved) {
-                resolved = true;
-                subscription.remove();
-                resolve("cancel");
+            if (userJson) {
+                await saveSession(JSON.parse(userJson));
             }
-        }, 120000);
-    });
+            return "success";
+        }
+    } else if (result.type === "cancel" || result.type === "dismiss") {
+        return result.type;
+    }
+
+    return "failure";
 }
 
 export async function signOut() {
