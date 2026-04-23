@@ -53,7 +53,7 @@ export async function signInWithGoogle(): Promise<string> {
         authUrl,
         redirectUri,
         {
-            preferEphemeralSession: true,
+            showInRecents: true,
         }
     );
 
