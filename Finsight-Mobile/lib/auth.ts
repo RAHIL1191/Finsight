@@ -53,7 +53,10 @@ export async function signInWithGoogle(): Promise<string> {
     // way to do OAuth in React Native/Expo.
     const result = await WebBrowser.openAuthSessionAsync(
         authUrl,
-        redirectUri
+        redirectUri,
+        {
+            createTask: false,
+        }
     );
 
     if (result.type === "success" && result.url) {
