@@ -84,8 +84,8 @@ export async function POST(req: NextRequest) {
 
         // Fallback to legacy database check
         if (!accessToken) {
-            const User = (await import("@/models/User")).default;
-            const user = await User.findById(userId).select("+gmailAccessToken +gmailRefreshToken").lean();
+            const { getCurrentUser } = await import("@/lib/auth");
+            const user = await getCurrentUser();
             if (user?.gmailAccessToken) {
                 accessToken = user.gmailAccessToken;
             }
