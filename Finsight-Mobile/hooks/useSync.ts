@@ -9,17 +9,18 @@ export const useSync = () => {
   const { user } = useUser();
 
   const syncGmail = async () => {
-    setIsSyncing(true);
     setError(null);
+    console.log('[Sync] Starting Gmail Sync...');
     try {
-      // 1. Get the Google account from the current login session
+      console.log(`🔍 USER STATE: ${user?.externalAccounts.length || 0} external accounts found.`);
       const googleAccount = user?.externalAccounts.find(acc => acc.provider === 'google');
       
       if (!googleAccount) {
+        console.warn('[Sync] ⚠️ No Google account found in Clerk session.');
         throw new Error('Please sign in with Google to sync emails');
       }
 
-      // 2. Fetch the access token from Clerk for this account
+      console.log('[Sync] 🔑 Account found, fetching token...');
       const tokenResponse = await googleAccount.getToken();
       const accessToken = typeof tokenResponse === 'string' ? tokenResponse : tokenResponse?.token;
 
@@ -27,7 +28,7 @@ export const useSync = () => {
         throw new Error('Could not retrieve token from Clerk');
       }
 
-      // We call the backend import endpoint
+      console.log('[Sync] 🚀 CALLING GMAIL IMPORT API...');
       const response = await apiFetch<{ success: boolean; data: any }>('/api/gmail/import', {
         method: 'POST',
         body: JSON.stringify({
@@ -35,37 +36,39 @@ export const useSync = () => {
           maxMessages: 100
         })
       });
+
       if (response.success) {
         console.log(`[Sync] Gmail success: Imported ${response.data.imported} items.`);
         setLastSync(new Date());
       }
     } catch (err: any) {
+      console.error('[Sync] Gmail Error:', err);
       setError(err.message || 'Gmail sync failed');
-    } finally {
-      setIsSyncing(false);
     }
   };
 
   const syncPlaid = async () => {
-    setIsSyncing(true);
     setError(null);
+    console.log('[Sync] Starting Plaid Sync...');
     try {
       const response = await apiFetch<{ success: boolean; data: any }>('/api/plaid/sync', {
         method: 'POST',
       });
       if (response.success) {
+        console.log('[Sync] Plaid success');
         setLastSync(new Date());
       }
     } catch (err: any) {
-      setError(err.message || 'Plaid sync failed');
-    } finally {
-      setIsSyncing(false);
+      console.error('[Sync] Plaid Error:', err);
+      // We don't necessarily want Plaid failure to block Gmail success
     }
   };
 
   const syncAll = async () => {
     setIsSyncing(true);
-    await Promise.allSettled([syncPlaid(), syncGmail()]);
+    // Temporarily disabled Plaid to focus on Gmail debugging
+    // await syncPlaid(); 
+    await syncGmail();
     setIsSyncing(false);
   };
 
