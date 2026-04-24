@@ -66,19 +66,27 @@ export async function getCurrentUser() {
     if (!userId) return null;
 
     const User = (await import("@/models/User")).default;
+    const mongoose = (await import("mongoose")).default;
 
-    const user = await User.findOne({ 
-        $or: [
-            { _id: userId },
-            { clerkId: userId },
-            { email: userId }
-        ]
-    }).lean();
+    // Only query by _id if it's a valid ObjectId to prevent CastError
+    const isObjectId = mongoose.Types.ObjectId.isValid(userId);
+    
+    const query = isObjectId 
+        ? { $or: [{ _id: userId }, { clerkId: userId }, { email: userId }] }
+        : { $or: [{ clerkId: userId }, { email: userId }] };
+
+    let user = await User.findOne(query);
+
+    // If we found them by email but they didn't have a clerkId, link it now!
+    if (user && !user.clerkId && userId.startsWith('user_')) {
+        user.clerkId = userId;
+        await user.save();
+    }
 
     if (!user) return null;
 
     return {
-        ...user,
+        ...user.toObject(),
         id: user._id.toString()
     };
 }
