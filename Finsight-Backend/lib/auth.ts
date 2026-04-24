@@ -21,9 +21,10 @@ export async function getCurrentUserId(): Promise<string | null> {
     // 1. Try Clerk first (handles Bearer tokens from Mobile)
     try {
         const { userId } = getClerkAuth();
+        console.log(`[Auth] Clerk User ID: ${userId || 'null'}`);
         if (userId) return userId;
-    } catch (e) {
-        // Not using Clerk or request is missing Clerk headers
+    } catch (e: any) {
+        console.warn(`[Auth] Clerk error: ${e.message}`);
     }
 
     // 2. Fallback to NextAuth (handles cookies from Web)
