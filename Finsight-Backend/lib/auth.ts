@@ -20,11 +20,16 @@ export async function getAuthSession(): Promise<Session | null> {
 export async function getCurrentUserId(): Promise<string | null> {
     // 1. Try Clerk first (handles Bearer tokens from Mobile)
     try {
+        // Log Authorization header presence for debugging
+        const { headers } = await import('next/headers');
+        const authHeader = headers().get('authorization');
+        console.log(`[Auth] Auth Header: ${authHeader ? 'Bearer ' + authHeader.substring(7, 15) + '...' : 'MISSING'}`);
+
         const { userId } = getClerkAuth();
         console.log(`[Auth] Clerk User ID: ${userId || 'null'}`);
         if (userId) return userId;
     } catch (e: any) {
-        // Not a Clerk request, ignore
+        console.warn(`[Auth] Clerk error: ${e.message}`);
     }
 
     // 2. Fallback to NextAuth (handles cookies from Web)
