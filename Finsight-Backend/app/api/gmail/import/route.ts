@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUserId } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Transaction from "@/models/Transaction";
+import User from "@/models/User";
 import { GmailImportSchema } from "@/types";
 import { ok, fail } from "@/lib/api-response";
 import { fetchRecentGmailMessages } from "@/lib/gmail";
@@ -50,8 +51,25 @@ export async function POST(req: NextRequest) {
 
         await connectToDatabase();
 
+        let accessToken = input.accessToken;
+
+        // If no token in body, try to get from User record
+        if (!accessToken) {
+            const user = await User.findById(userId).select("+gmailAccessToken +gmailRefreshToken").lean();
+            if (user?.gmailAccessToken) {
+                accessToken = user.gmailAccessToken;
+            }
+        }
+
+        if (!accessToken) {
+            return NextResponse.json(fail("No Gmail access token provided or linked"), { status: 400 });
+        }
+
+        console.log(`[Gmail] Starting sync for user: ${userId}`);
+
         // Fetch recent Gmail messages (lightly parsed).
-        const messages = await fetchRecentGmailMessages(input);
+        const messages = await fetchRecentGmailMessages({ ...input, accessToken });
+        console.log(`[Gmail] Found ${messages.length} messages to analyze.`);
 
         if (messages.length === 0) {
             return NextResponse.json(
@@ -123,8 +141,11 @@ export async function POST(req: NextRequest) {
                 attachmentUrl: undefined
             });
 
+            console.log(`[Gmail] ✅ Imported: ${msg.subject} ($${amount})`);
             imported += 1;
         }
+
+        console.log(`[Gmail] Sync complete. Imported: ${imported}, Skipped: ${skippedExisting}`);
 
         return NextResponse.json(
             ok({

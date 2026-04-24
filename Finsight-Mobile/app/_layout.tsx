@@ -1,14 +1,26 @@
 import "../global.css";
 import { Stack } from "expo-router";
+import { View, ActivityIndicator } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AuthProvider } from "@/context/AuthContext";
+import { ClerkProvider, ClerkLoaded } from "@clerk/expo";
+import { tokenCache } from "@clerk/expo/token-cache";
+import Constants from "expo-constants";
+
+const publishableKey = Constants.expoConfig?.extra?.clerkPublishableKey as string;
+
+if (!publishableKey) {
+  throw new Error(
+    "Missing publishableKey. Please set clerkPublishableKey in app.json"
+  );
+}
 
 export default function RootLayout() {
-    return (
+  console.log("RootLayout: Rendering provider");
+  return (
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
         <SafeAreaProvider>
-            <AuthProvider>
-                <Stack screenOptions={{ headerShown: false }} />
-            </AuthProvider>
+          <Stack screenOptions={{ headerShown: false }} />
         </SafeAreaProvider>
-    );
+    </ClerkProvider>
+  );
 }

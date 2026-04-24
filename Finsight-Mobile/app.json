@@ -21,7 +21,11 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      "@clerk/expo"
+    ],
+    "extra": {
+      "clerkPublishableKey": "pk_test_bm90YWJsZS1kZWVyLTE2LmNsZXJrLmFjY291bnRzLmRldiQ"
+    }
   }
 }

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /b /s *.log)",
+      "Bash(dir /b /s build.gradle)",
+      "Bash(npm list *)",
+      "Bash(env)",
+      "Bash(gh api *)",
+      "Bash(gh secret *)",
+      "Bash(curl -s -X POST https://finsight-one-chi.vercel.app/api/auth/mobile/google \\\\n  -H \"Content-Type: application/json\" \\\\n  -d '{\"idToken\":\"test\"}')",
+      "Bash(curl -I https://finsight-one-chi.vercel.app/api/auth/mobile/google)",
+      "Bash(git show *)"
+    ]
+  }
+}

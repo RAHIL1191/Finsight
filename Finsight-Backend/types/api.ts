@@ -35,6 +35,14 @@ export const UpdateUserSchema = z.object({
 
 export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
 
+export const GmailTokenUpdateSchema = z.object({
+    accessToken: z.string().min(1),
+    refreshToken: z.string().optional(),
+    expiresAt: z.string().datetime().optional()
+});
+
+export type GmailTokenUpdateInput = z.infer<typeof GmailTokenUpdateSchema>;
+
 // ─── Account ──────────────────────────────────────────────────────────────────
 
 export const AccountTypeSchema = z.enum([
@@ -253,7 +261,7 @@ export type SnapTradeSyncInput = z.infer<typeof SnapTradeSyncSchema>;
 // ─── Gmail Import ─────────────────────────────────────────────────────────────
 
 export const GmailImportSchema = z.object({
-    accessToken: z.string().min(1),
+    accessToken: z.string().optional(),
     maxMessages: z.number().int().min(1).max(500).default(100)
 });
 

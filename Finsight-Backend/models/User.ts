@@ -73,6 +73,21 @@ const UserSchema = new Schema<IUserDocument>(
             type: String,
             default: null
         },
+        
+        gmailAccessToken: {
+            type: String,
+            default: null
+        },
+
+        gmailRefreshToken: {
+            type: String,
+            default: null
+        },
+
+        gmailTokenExpiresAt: {
+            type: Date,
+            default: null
+        },
 
         onboardingComplete: {
             type: Boolean,

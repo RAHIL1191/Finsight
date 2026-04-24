@@ -44,6 +44,11 @@ export interface IUser {
     /** FCM / Expo push token */
     pushToken?: string;
 
+    /** External Gmail project tokens for separate account sync */
+    gmailAccessToken?: string;
+    gmailRefreshToken?: string;
+    gmailTokenExpiresAt?: ISODateString;
+
     /** Whether the user has completed onboarding */
     onboardingComplete: boolean;
 
