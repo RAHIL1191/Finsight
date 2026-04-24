@@ -3,8 +3,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUserId } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
-import Transaction from "@/models/Transaction";
-import User from "@/models/User";
 import { GmailImportSchema } from "@/types";
 import { ok, fail } from "@/lib/api-response";
 import { fetchRecentGmailMessages } from "@/lib/gmail";
@@ -86,6 +84,7 @@ export async function POST(req: NextRequest) {
 
         // Fallback to legacy database check
         if (!accessToken) {
+            const User = (await import("@/models/User")).default;
             const user = await User.findById(userId).select("+gmailAccessToken +gmailRefreshToken").lean();
             if (user?.gmailAccessToken) {
                 accessToken = user.gmailAccessToken;
@@ -115,6 +114,7 @@ export async function POST(req: NextRequest) {
 
         let imported = 0;
         let skippedExisting = 0;
+        const Transaction = (await import("@/models/Transaction")).default;
 
         for (const msg of messages) {
             // Deduplicate by gmailMessageId per user.
