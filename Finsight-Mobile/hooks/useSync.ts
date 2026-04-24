@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useUser } from '@clerk/expo';
+import { useUser, useAuth } from '@clerk/expo';
 import { apiFetch } from '../lib/api';
 
 export const useSync = () => {
@@ -7,6 +7,7 @@ export const useSync = () => {
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { user } = useUser();
+  const { getToken } = useAuth();
 
   const syncGmail = async () => {
     setError(null);
@@ -18,13 +19,15 @@ export const useSync = () => {
     }
 
     try {
-      // We no longer fetch the token on the mobile app.
-      // Instead, we just tell the backend which Clerk user is syncing.
-      // The backend will fetch the token securely using its secret key.
+      const sessionToken = await getToken();
+      
       const response = await apiFetch<{ success: boolean; data: any }>('/api/gmail/import', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
         body: JSON.stringify({
-          clerkUserId: user.id, // Tell backend who we are
+          clerkUserId: user.id,
           maxMessages: 100
         })
       });
