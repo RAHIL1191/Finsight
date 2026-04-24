@@ -27,6 +27,13 @@ const UserSchema = new Schema<IUserDocument>(
             match: [/^\S+@\S+\.\S+$/, "Invalid email address"]
         },
 
+        clerkId: {
+            type: String,
+            unique: true,
+            sparse: true, // Only some users have clerkId
+            default: null
+        },
+
         image: {
             type: String,
             default: null
@@ -102,7 +109,7 @@ const UserSchema = new Schema<IUserDocument>(
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
 
-UserSchema.index({ email: 1 }, { unique: true });
+// (email index is already defined with unique: true in schema)
 
 // ─── Model (singleton-safe for Next.js hot reload) ────────────────────────────
 
