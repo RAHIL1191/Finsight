@@ -52,8 +52,39 @@ export async function POST(req: NextRequest) {
         await connectToDatabase();
 
         let accessToken = input.accessToken;
+        const clerkUserId = (input as any).clerkUserId;
 
-        // If no token in body, try to get from User record
+        // If no token, but we have a Clerk User ID, fetch token from Clerk API
+        if (!accessToken && clerkUserId) {
+            const clerkSecret = process.env.CLERK_SECRET_KEY;
+            if (!clerkSecret) {
+                console.warn("[Clerk] Missing CLERK_SECRET_KEY in environment - Please add it to .env.local");
+            } else {
+                try {
+                    console.log(`[Clerk] Fetching OAuth token for user: ${clerkUserId}`);
+                    const clerkRes = await fetch(
+                        `https://api.clerk.com/v1/users/${clerkUserId}/oauth_access_tokens/oauth_google`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${clerkSecret}`,
+                                "Content-Type": "application/json"
+                            }
+                        }
+                    );
+                    const clerkData = await clerkRes.json();
+                    if (Array.isArray(clerkData) && clerkData.length > 0) {
+                        accessToken = clerkData[0].token;
+                        console.log("[Clerk] Token retrieved successfully from Clerk API");
+                    } else {
+                        console.error("[Clerk] Failed to retrieve OAuth token:", clerkData);
+                    }
+                } catch (err) {
+                    console.error("[Clerk] API Error:", err);
+                }
+            }
+        }
+
+        // Fallback to legacy database check
         if (!accessToken) {
             const user = await User.findById(userId).select("+gmailAccessToken +gmailRefreshToken").lean();
             if (user?.gmailAccessToken) {
@@ -62,7 +93,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (!accessToken) {
-            return NextResponse.json(fail("No Gmail access token provided or linked"), { status: 400 });
+            return NextResponse.json(fail("No Google/Gmail tokens found. Check Clerk Dashboard and .env.local keys."), { status: 400 });
         }
 
         console.log(`[Gmail] Starting sync for user: ${userId}`);
